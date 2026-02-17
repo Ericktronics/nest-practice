@@ -4,7 +4,7 @@ import { CreateProfileDto, PutProfileDto } from './dto/profile.dto';
 
 @Injectable()
 export class ProfilesService {
-  private profiles = [
+  private profiles: PutProfileDto[] = [
     {
       id: randomUUID(),
       name: 'Test Profile 1',
@@ -32,7 +32,13 @@ export class ProfilesService {
   }
 
   findOne(id: string) {
-    return this.profiles.find((profile) => profile.id === id);
+    const profile = this.profiles.find((profile) => profile.id === id);
+
+    if (profile === undefined) {
+      throw new Error(`Profile with id ${id} is not found`);
+    }
+
+    return profile;
   }
 
   create(createProfile: CreateProfileDto) {
@@ -45,20 +51,27 @@ export class ProfilesService {
       (profile) => profile.id === updateProfile.id,
     );
 
-    this.profiles[profileIndex] = updateProfile;
+    if (profileIndex === -1) {
+      throw new Error(
+        `Cannot update profileId ${updateProfile.id}. Profile is Not Found`,
+      );
+    }
 
+    this.profiles[profileIndex] = updateProfile;
     return this.profiles[profileIndex];
   }
 
   delete(id: UUID) {
     const matchingProfile = this.profiles.findIndex(
-      (profile) => profile.id !== id,
+      (profile) => profile.id === id,
     );
 
-    if (matchingProfile === -1) {
-      return 'No Profile';
+    if (matchingProfile < 0) {
+      throw new Error(
+        `Cannot delete profileId ${id}. Profile is Not Found`,
+      );
     }
-    
-    this.profiles.splice(matchingProfile, 1);
+
+    return this.profiles.splice(matchingProfile, 1);
   }
 }
